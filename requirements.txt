@@ -1,0 +1,7 @@
+gym
+atari-py
+numpy
+scipy
+torch
+torchvision
+matplotlib
