@@ -18,7 +18,7 @@ class DQN(nn.Module):
 
         # used for computing the output size of the conv layers
         def conv2d_size_out(size, kernels, strides):
-            for k, s in zip(kernels, strides)
+            for k, s in zip(kernels, strides):
                 size = (size - kernel_size) // stride  + 1
             return size
 
