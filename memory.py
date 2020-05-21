@@ -31,3 +31,6 @@ class ReplayMemory:
         terminal = self.terminal_memory[samples]
 
         return states, actions, rewards, next_states, terminal
+
+    def __len__(self):
+        return self.buffer_size

@@ -2,9 +2,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DQN(nn.Module):
-    def __init__(self, num_actions, c=4, h=84, w=84, fc=512, kernel1=8, stride1=4, f1=32,
+    def __init__(self, num_actions, state_shape, fc=512, kernel1=8, stride1=4, f1=32,
             kernel2=4, stride2=2, f2=64, kernel3=3, stride3=1, f3=64):
         super(DQN, self).__init__()
+
+        c = state_shape[0]
+        h = state_shape[1]
+        w = state_shape[2]
 
         self.act = F.relu # relu activation function
 
@@ -23,7 +27,7 @@ class DQN(nn.Module):
             return size
 
         convw = conv2d_size_out(w, [kernel1, kernel2, kernel3], [stride1, stride2, stride3])
-        convh = conv2d_size_out(w, [kernel1, kernel2, kernel3], [stride1, stride2, stride3])
+        convh = conv2d_size_out(h, [kernel1, kernel2, kernel3], [stride1, stride2, stride3])
         linear_input_size = convw * convh * f3
 
         # fully connected layers
