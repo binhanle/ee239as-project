@@ -14,7 +14,7 @@ print(env.observation_space)
 original_shape = env.observation_space.shape
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-MEMORY_SIZE = 10000
+MEMORY_SIZE = 1000
 STATE_SHAPE = (original_shape[2], original_shape[0], original_shape[1]) 
 LR = 0.01
 
@@ -49,4 +49,3 @@ for i_episode in range(num_episodes):
     agent.optimize_model()
 
     cur_state = next_state
-    done = True

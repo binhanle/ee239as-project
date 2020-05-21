@@ -24,11 +24,11 @@ class ReplayMemory:
     def sample(self, batch_size):
         samples = np.random.choice(self.buffer_size, batch_size, replace=False)
 
-        states = self.state_memory[samples]
-        actions = self.action_memory[samples]
-        rewards = self.reward_memory[samples]
-        next_states = self.new_state_memory[samples]
-        terminal = self.terminal_memory[samples]
+        states = self.state_mem[samples]
+        actions = self.action_mem[samples]
+        rewards = self.reward_mem[samples]
+        next_states = self.new_state_mem[samples]
+        terminal = self.terminal_mem[samples]
 
         return states, actions, rewards, next_states, terminal
 
