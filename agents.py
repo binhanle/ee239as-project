@@ -27,7 +27,7 @@ class Agent():
         rewards = torch.tensor(reward)
         dones = torch.tensor(done)
         actions = torch.tensor(action)
-        next_states = torch.tensor(new_state)
+        next_states = torch.tensor(next_state)
 
         return states, actions, rewards, next_states, dones
 
@@ -43,10 +43,8 @@ class Agent():
 
         self.optimizer.zero_grad()
 
-        indices = list(range(self.batch_size))
-
-        cur_Q = self.q_online(states)[indices, actions]
-        next_Q = self.q_target(next_states).max(dim=1).flatten()
+        cur_Q = torch.Tensor([pred[actions[i]] for i, pred in enumerate(self.q_online(states))])
+        next_Q = self.q_target(next_states).max(dim=1).values
 
         cur_Q[dones] = 0.0
         q_target = rewards + self.gamma*next_Q

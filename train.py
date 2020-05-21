@@ -32,6 +32,7 @@ def preprocess_state(state):
 
 num_episodes = 3
 for i_episode in range(num_episodes):
+  print("Running episode:", i_episode)
   done = False
   epsilon = 0.01
   cur_state = preprocess_state(env.reset())

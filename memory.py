@@ -9,7 +9,7 @@ class ReplayMemory:
         self.next_state_mem = np.zeros((capacity, *state_shape), dtype=np.float32)
         self.action_mem = np.zeros(capacity, dtype=np.int32)
         self.reward_mem = np.zeros(capacity, dtype=np.float32)
-        self.terminal_mem = np.zeros(capacity, dtype=np.uint8)
+        self.terminal_mem = np.zeros(capacity, dtype=np.bool)
 
     def push(self, state, action, reward, next_state, done):
         self.state_mem[self.position] = state
@@ -27,7 +27,7 @@ class ReplayMemory:
         states = self.state_mem[samples]
         actions = self.action_mem[samples]
         rewards = self.reward_mem[samples]
-        next_states = self.new_state_mem[samples]
+        next_states = self.next_state_mem[samples]
         terminal = self.terminal_mem[samples]
 
         return states, actions, rewards, next_states, terminal
