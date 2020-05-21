@@ -1,7 +1,8 @@
 import torch
 
 class Agent():
-    def __init__(self, mem_buffer, q_online, q_target, optimizer, loss_fn, gamma=0.99, batch_size=200, update_target_interval=1000):
+    def __init__(self, device, mem_buffer, q_online, q_target, optimizer, loss_fn, gamma=0.99, batch_size=200, update_target_interval=1000):
+        self.device = device
         self.mem_buffer = mem_buffer
         self.q_online = q_online
         self.q_target = q_target
@@ -13,7 +14,7 @@ class Agent():
         self.step_counter = 0
 
     def select_action(self, state):
-        state_tensor = torch.tensor([state], dtype=torch.float)
+        state_tensor = torch.tensor([state], dtype=torch.float).to(self.device)
         qvalues = self.q_online(state_tensor)
         return torch.argmax(qvalues).item()
 
@@ -23,11 +24,11 @@ class Agent():
     def sample_memory(self):
         state, action, reward, next_state, done = self.mem_buffer.sample(self.batch_size)
 
-        states = torch.tensor(state)
-        rewards = torch.tensor(reward)
-        dones = torch.tensor(done)
-        actions = torch.tensor(action)
-        next_states = torch.tensor(next_state)
+        states = torch.tensor(state).to(self.device)
+        rewards = torch.tensor(reward).to(self.device)
+        dones = torch.tensor(done).to(self.device)
+        actions = torch.tensor(action).to(self.device)
+        next_states = torch.tensor(next_state).to(self.device)
 
         return states, actions, rewards, next_states, dones
 
@@ -49,7 +50,7 @@ class Agent():
         cur_Q[dones] = 0.0
         q_target = rewards + self.gamma*next_Q
 
-        loss = self.loss_fn(q_target, cur_Q)
+        loss = self.loss_fn(q_target, cur_Q).to(self.device)
         loss.backward()
         self.optimizer.step()
 
