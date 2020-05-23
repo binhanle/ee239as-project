@@ -27,6 +27,9 @@ optimizer = torch.optim.RMSprop(dqn_online.parameters(), lr=LR)
 loss_fn = torch.nn.MSELoss()
 agent = Agent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn)
 
+dqn_online.to(device)
+dqn_target.to(device)
+
 def preprocess_state(state):
     return np.transpose(state, (2, 0, 1))
 
