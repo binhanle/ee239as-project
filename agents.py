@@ -48,7 +48,7 @@ class Agent():
         cur_Q = self.q_online(states)[indices, actions]
         next_Q = self.q_target(next_states).max(dim=1).values
 
-        cur_Q[dones] = 0.0
+        next_Q[dones] = 0.0
         q_target = rewards + self.gamma*next_Q
 
         loss = self.loss_fn(q_target, cur_Q).to(self.device)
