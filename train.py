@@ -2,27 +2,31 @@ from nn_models import DQN
 from memory import ReplayMemory
 from agents import Agent
 from checkpoint import save_checkpoint, load_checkpoint
+from atari_wrappers import make_atari, wrap_deepmind
 import torch
 import numpy as np
 import gym
 import os
 
-env = gym.make("Breakout-v0")
+# set environment here
+ATARI_GAME = "BreakoutNoFrameskip-v4"
+print("Using atari game:", ATARI_GAME)
+
+env = make_atari("BreakoutNoFrameskip-v4")
+env = wrap_deepmind(env)
 
 n_actions = env.action_space.n
-print(n_actions)
-print(env.action_space)
-print(env.observation_space)
-original_shape = env.observation_space.shape
+print("Action space is:", env.action_space)
 
+STATE_SHAPE = env.observation_space.shape
+print("Observation space is:", STATE_SHAPE)
+
+# set training parameters here
 MEMORY_SIZE = 1000
-STATE_SHAPE = (original_shape[2], original_shape[0], original_shape[1]) 
-LR = 0.01
+LR = 0.001
 CKPT_FILENAME = "breakout.ckpt"
 CKPT_ENABLED = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-print(STATE_SHAPE)
 
 dqn_online = DQN(n_actions, STATE_SHAPE)
 dqn_target = DQN(n_actions, STATE_SHAPE)
@@ -35,11 +39,8 @@ else:
     mem_buffer = ReplayMemory(MEMORY_SIZE, STATE_SHAPE)
     progress = []
 
-loss_fn = torch.nn.MSELoss()
+loss_fn = torch.nn.SmoothL1Loss()
 agent = Agent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn)
-
-def preprocess_state(state):
-    return np.transpose(state, (2, 0, 1))
 
 num_episodes = 3
 for i_episode in range(num_episodes):
@@ -47,7 +48,7 @@ for i_episode in range(num_episodes):
   score = 0.0
   done = False
   epsilon = 0.01
-  cur_state = preprocess_state(env.reset())
+  cur_state = env.reset()
   time_step = 0
   while not done:
     if np.random.random() > epsilon:
@@ -56,7 +57,6 @@ for i_episode in range(num_episodes):
       action = env.action_space.sample()
 
     next_state, reward, done, info = env.step(action)
-    next_state = preprocess_state(next_state)
     score += reward
 
     agent.add_memory(cur_state, action, reward, next_state, done)
