@@ -126,7 +126,7 @@ class ClipRewardEnv(gym.RewardWrapper):
 
     def reward(self, reward):
         """Bin reward to {+1, 0, -1} by its sign."""
-        return np.sign(reward)
+        return np.sign(reward).astype(np.int8)
 
 
 class WarpFrame(gym.ObservationWrapper):
@@ -155,7 +155,6 @@ class WarpFrame(gym.ObservationWrapper):
             frame = np.expand_dims(frame, 0)
 
         return frame
-
 
 class FrameStack(gym.Wrapper):
     def __init__(self, env, k):

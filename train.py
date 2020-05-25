@@ -42,7 +42,7 @@ else:
 loss_fn = torch.nn.SmoothL1Loss()
 agent = Agent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn)
 
-num_episodes = 3
+num_episodes = 10
 for i_episode in range(num_episodes):
   print("Running episode:", i_episode)
   score = 0.0

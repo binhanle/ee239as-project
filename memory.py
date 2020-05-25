@@ -3,34 +3,40 @@ import numpy as np
 class ReplayMemory:
     def __init__(self, capacity, state_shape):
         self.capacity = capacity
+        self.state_shape = state_shape
         self.position = 0
-        self.buffer_size = 0
-        self.state_mem = np.zeros((capacity, *state_shape), dtype=np.float32)
-        self.next_state_mem = np.zeros((capacity, *state_shape), dtype=np.float32)
-        self.action_mem = np.zeros(capacity, dtype=np.int32)
-        self.reward_mem = np.zeros(capacity, dtype=np.float32)
-        self.terminal_mem = np.zeros(capacity, dtype=np.bool)
+        self.buffer = []
 
     def push(self, state, action, reward, next_state, done):
-        self.state_mem[self.position] = state
-        self.next_state_mem[self.position] = next_state
-        self.action_mem[self.position] = action
-        self.reward_mem[self.position] = reward
-        self.terminal_mem[self.position] = done
+        mem = {"state":state,
+                "action":action,
+                "reward":reward,
+                "next_state":next_state,
+                "done":done}
+
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(mem)
+        else:
+            self.buffer[self.position] = mem
 
         self.position = (self.position + 1) % self.capacity
-        self.buffer_size = min(self.buffer_size + 1, self.capacity)
 
     def sample(self, batch_size):
-        samples = np.random.choice(self.buffer_size, batch_size, replace=False)
+        states = np.zeros((batch_size,) + self.state_shape, dtype=np.float32)
+        next_states = np.zeros((batch_size,) + self.state_shape, dtype=np.float32)
+        actions = np.zeros(batch_size, dtype=np.float32)
+        rewards = np.zeros(batch_size, dtype=np.float32)
+        terminal = np.zeros(batch_size, dtype=np.bool)
 
-        states = self.state_mem[samples]
-        actions = self.action_mem[samples]
-        rewards = self.reward_mem[samples]
-        next_states = self.next_state_mem[samples]
-        terminal = self.terminal_mem[samples]
+        samples = np.random.choice(len(self.buffer), batch_size, replace=False)
+        for index, sample in enumerate(samples):
+            states[index] = np.asarray(self.buffer[sample]["state"])
+            next_states[index] = np.asarray(self.buffer[sample]["next_state"])
+            actions[index] = self.buffer[sample]["action"]
+            rewards[index] = self.buffer[sample]["reward"]
+            terminal[index] = self.buffer[sample]["done"]
 
         return states, actions, rewards, next_states, terminal
 
     def __len__(self):
-        return self.buffer_size
+        return len(self.buffer)
