@@ -93,7 +93,7 @@ for i_episode in range(num_episodes):
       print("Completed iteration", time_step)
 
   print("Episode {} score: {}, agent score: {}, total steps taken: {}".format(i_episode, score, agent_score, total_steps))
-  progress.append((time_step, total_steps, score))
+  progress.append((time_step, total_steps, score, agent_score))
   # print("Progress is", progress)
   if CKPT_ENABLED:
     save_checkpoint(mem_buffer, progress, dqn_online, dqn_target, optimizer, CKPT_FILENAME)
