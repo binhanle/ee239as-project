@@ -24,10 +24,10 @@ STATE_SHAPE = env.observation_space.shape
 print("Observation space is:", STATE_SHAPE)
 
 # set training parameters here
-MEMORY_SIZE = 10000 # maximum size of memory buffer, increase to as large as possible (paper used 1 million)
-LR = 0.00025 # learning rate
+MEMORY_SIZE = 1000000 # maximum size of memory buffer, increase to as large as possible (paper used 1 million)
+LR = 0.00025 # learning rate (paper used 0.00025)
 GAMMA = 0.99
-BATCH_SIZE = 32
+BATCH_SIZE = 32 # batch size for parameter updates (paper used 32)
 UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to online net
 UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied from online net to target net
 
@@ -54,11 +54,11 @@ agent = DQNAgent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn,
 # training phase
 
 # adjust these hyperparameters as necessary
-num_episodes = 10 # number of episodes to train for
-explore_phase_length = 50000 # number of steps without any exploitation (paper used 50000)
+num_episodes = 5000 # number of episodes to train for
+explore_phase_length = 50000 # number of steps without any exploitation (paper used 50k)
 epsilon = 1.0 # initial epsilon value
-epsilon_decrement_steps = 200000 # how many steps to decrement epsilon to min value (paper used 1 million)
-min_epsilon = 0.01 # smallest possible value of epsilon
+epsilon_decrement_steps = 1000000 # how many steps to decrement epsilon to min value (paper used 1 million)
+min_epsilon = 0.1 # smallest possible value of epsilon (paper used 0.1)
 epsilon_dec = (epsilon - min_epsilon) / epsilon_decrement_steps
 
 total_steps = 0
