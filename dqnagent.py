@@ -39,7 +39,9 @@ class DQNAgent():
 
     def optimize_model(self):
         if len(self.mem_buffer) < self.batch_size:
-            return
+            return None
+
+        loss_value = None
 
         if self.step_counter % self.update_online_interval == 0:
             states, actions, rewards, next_states, dones = self.sample_memory()
@@ -56,7 +58,10 @@ class DQNAgent():
             loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
             loss.backward()
             self.optimizer.step()
+            loss_value = loss.item()
 
         self.update_target_network()
 
         self.step_counter += 1
+
+        return loss_value

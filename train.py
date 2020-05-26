@@ -11,7 +11,7 @@ import os
 
 # set environment here
 ATARI_GAME = "BreakoutNoFrameskip-v4"
-# ATARI_GAME = "PongNoFramseskip-v4"
+# ATARI_GAME = "PongNoFrameskip-v4"
 print("Using atari game:", ATARI_GAME)
 
 env = make_atari(ATARI_GAME)
@@ -31,8 +31,8 @@ BATCH_SIZE = 32
 UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to online net
 UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied from online net to target net
 
-CKPT_FILENAME = "breakout.ckpt"
-CKPT_ENABLED = False
+CKPT_FILENAME = ATARI_GAME + ".ckpt"
+CKPT_ENABLED = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dqn_online = DQN(N_ACTIONS, STATE_SHAPE)
@@ -69,6 +69,8 @@ for i_episode in range(num_episodes):
   agent_score = 0.0
   done = False
   time_step = 0
+  model_updates = 0
+  mean_loss = 0
 
   cur_state = env.reset()
 
@@ -90,7 +92,11 @@ for i_episode in range(num_episodes):
     score += reward
     agent_score += agent_reward
     
-    agent.optimize_model()
+    loss = agent.optimize_model()
+    if loss is not None:
+        model_updates += 1
+        delta = loss - mean_loss
+        mean_loss += delta / model_updates
 
     cur_state = next_state
     
@@ -100,7 +106,7 @@ for i_episode in range(num_episodes):
     #   print("Completed iteration", time_step)
 
   print("Episode {} score: {}, agent score: {}, total steps taken: {}, epsilon: {}".format(i_episode, score, agent_score, total_steps, epsilon))
-  progress.append((time_step, total_steps, score, agent_score))
+  progress.append((time_step, total_steps, score, agent_score, mean_loss))
   # print("Progress is", progress)
   if CKPT_ENABLED and score > max_score:
     max_score = score
