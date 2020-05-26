@@ -32,7 +32,7 @@ UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to onli
 UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied from online net to target net
 
 CKPT_FILENAME = ATARI_GAME + ".ckpt"
-CKPT_ENABLED = True
+CKPT_ENABLED = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dqn_online = DQN(N_ACTIONS, STATE_SHAPE)
