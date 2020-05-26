@@ -11,9 +11,10 @@ import os
 
 # set environment here
 ATARI_GAME = "BreakoutNoFrameskip-v4"
+# ATARI_GAME = "PongNoFramseskip-v4"
 print("Using atari game:", ATARI_GAME)
 
-env = make_atari("BreakoutNoFrameskip-v4")
+env = make_atari(ATARI_GAME)
 env = wrap_deepmind(env, clip_rewards=False)
 
 N_ACTIONS = env.action_space.n
@@ -23,7 +24,7 @@ STATE_SHAPE = env.observation_space.shape
 print("Observation space is:", STATE_SHAPE)
 
 # set training parameters here
-MEMORY_SIZE = 10000 # maximum size of memory buffer, increase to as large as possible
+MEMORY_SIZE = 10000 # maximum size of memory buffer, increase to as large as possible (paper used 1 million)
 LR = 0.00025 # learning rate
 GAMMA = 0.99
 BATCH_SIZE = 32
@@ -54,7 +55,7 @@ agent = DQNAgent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn,
 
 # adjust these hyperparameters as necessary
 num_episodes = 10 # number of episodes to train for
-explore_phase_length = 50000 # number of steps without any exploitation
+explore_phase_length = 50000 # number of steps without any exploitation (paper used 50000)
 epsilon = 1.0 # initial epsilon value
 epsilon_decrement_steps = 200000 # how many steps to decrement epsilon to min value (paper used 1 million)
 min_epsilon = 0.01 # smallest possible value of epsilon
@@ -95,8 +96,8 @@ for i_episode in range(num_episodes):
     
     time_step += 1
     total_steps += 1
-    if time_step % 100 == 0:
-      print("Completed iteration", time_step)
+    # if time_step % 100 == 0:
+    #   print("Completed iteration", time_step)
 
   print("Episode {} score: {}, agent score: {}, total steps taken: {}, epsilon: {}".format(i_episode, score, agent_score, total_steps, epsilon))
   progress.append((time_step, total_steps, score, agent_score))
