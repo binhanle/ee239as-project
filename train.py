@@ -1,6 +1,7 @@
 from nn_models import DQN
 from memory import ReplayMemory
-from agents import Agent
+from dqnagent import DQNAgent
+from ddqnagent import DDQNAgent
 from checkpoint import save_checkpoint, load_checkpoint
 from atari_wrappers import make_atari, wrap_deepmind, clip_reward
 import torch
@@ -22,11 +23,12 @@ STATE_SHAPE = env.observation_space.shape
 print("Observation space is:", STATE_SHAPE)
 
 # set training parameters here
-MEMORY_SIZE = 10000 # maximum size of memory buffer
-LR = 0.001 # learning rate
+MEMORY_SIZE = 10000 # maximum size of memory buffer, increase to as large as possible
+LR = 0.00025 # learning rate
 GAMMA = 0.99
-BATCH_SIZE = 200
-UPDATE_INTERVAL = 2500 # how frequently parameters are copied from online net to target net
+BATCH_SIZE = 32
+UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to online net
+UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied from online net to target net
 
 CKPT_FILENAME = "breakout.ckpt"
 CKPT_ENABLED = False
@@ -36,26 +38,30 @@ dqn_online = DQN(N_ACTIONS, STATE_SHAPE)
 dqn_target = DQN(N_ACTIONS, STATE_SHAPE)
 dqn_online.to(device)
 dqn_target.to(device)
-optimizer = torch.optim.RMSprop(dqn_online.parameters(), lr=LR)
+# optimizer = torch.optim.RMSprop(dqn_online.parameters(), lr=LR, momentum=0.95, eps=0.01)
+optimizer = torch.optim.Adam(dqn_online.parameters(), lr=LR)
 if CKPT_ENABLED and os.path.exists(CKPT_FILENAME):
-    mem_buffer, progress = load_checkpoint(dqn_online, dqn_target, optimizer, CKPT_FILENAME)
+    progress = load_checkpoint(dqn_online, dqn_target, optimizer, CKPT_FILENAME)
 else:
-    mem_buffer = ReplayMemory(MEMORY_SIZE, STATE_SHAPE)
     progress = []
 
+mem_buffer = ReplayMemory(MEMORY_SIZE, STATE_SHAPE)
+
 loss_fn = torch.nn.SmoothL1Loss() # huber loss function
-agent = Agent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn, GAMMA, BATCH_SIZE, UPDATE_INTERVAL)
+agent = DQNAgent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn, GAMMA, BATCH_SIZE, UPDATE_ONLINE_INTERVAL, UPDATE_TARGET_INTERVAL)
 
 # training phase
 
 # adjust these hyperparameters as necessary
 num_episodes = 10 # number of episodes to train for
-explore_phase_length = 1000 # number of steps without any exploitation
+explore_phase_length = 50000 # number of steps without any exploitation
 epsilon = 1.0 # initial epsilon value
-epsilon_decrement = 5e-4 # how much to decrement epsilon by per iteration
+epsilon_decrement_steps = 200000 # how many steps to decrement epsilon to min value (paper used 1 million)
 min_epsilon = 0.01 # smallest possible value of epsilon
+epsilon_dec = (epsilon - min_epsilon) / epsilon_decrement_steps
 
 total_steps = 0
+max_score = 0.0
 for i_episode in range(num_episodes):
   # print("Running episode:", i_episode)
   score = 0.0
@@ -69,7 +75,7 @@ for i_episode in range(num_episodes):
     
     # linearly anneal epsilon
     if total_steps > explore_phase_length:
-      epsilon = max(epsilon - epsilon_decrement, min_epsilon)
+      epsilon = max(epsilon - epsilon_dec, min_epsilon)
     
     if total_steps > explore_phase_length and np.random.random() > epsilon:
         action = agent.select_action(cur_state) # exploit
@@ -92,8 +98,9 @@ for i_episode in range(num_episodes):
     if time_step % 100 == 0:
       print("Completed iteration", time_step)
 
-  print("Episode {} score: {}, agent score: {}, total steps taken: {}".format(i_episode, score, agent_score, total_steps))
+  print("Episode {} score: {}, agent score: {}, total steps taken: {}, epsilon: {}".format(i_episode, score, agent_score, total_steps, epsilon))
   progress.append((time_step, total_steps, score, agent_score))
   # print("Progress is", progress)
-  if CKPT_ENABLED:
-    save_checkpoint(mem_buffer, progress, dqn_online, dqn_target, optimizer, CKPT_FILENAME)
+  if CKPT_ENABLED and score > max_score:
+    max_score = score
+    save_checkpoint(progress, dqn_online, dqn_target, optimizer, CKPT_FILENAME)

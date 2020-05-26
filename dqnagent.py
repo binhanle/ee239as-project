@@ -1,7 +1,7 @@
 import torch
 
-class Agent():
-    def __init__(self, device, mem_buffer, q_online, q_target, optimizer, loss_fn, gamma=0.99, batch_size=200, update_target_interval=1000):
+class DQNAgent():
+    def __init__(self, device, mem_buffer, q_online, q_target, optimizer, loss_fn, gamma=0.99, batch_size=32, update_online_interval=4, update_target_interval=10000):
         self.device = device
         self.mem_buffer = mem_buffer
         self.q_online = q_online
@@ -10,6 +10,7 @@ class Agent():
         self.loss_fn = loss_fn
         self.gamma = gamma
         self.batch_size = batch_size
+        self.update_online_interval = update_online_interval
         self.update_target_interval = update_target_interval
         self.step_counter = 0
 
@@ -33,27 +34,28 @@ class Agent():
         return states, actions, rewards, next_states, dones
 
     def update_target_network(self):
-        if self.step_counter % self.update_target_interval == 0:
+        if self.step_counter % self.update_target_interval == 1:
             self.q_target.load_state_dict(self.q_online.state_dict())
 
     def optimize_model(self):
         if len(self.mem_buffer) < self.batch_size:
             return
 
-        states, actions, rewards, next_states, dones = self.sample_memory()
+        if self.step_counter % self.update_online_interval == 0:
+            states, actions, rewards, next_states, dones = self.sample_memory()
 
-        self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
-        indices = list(range(self.batch_size))
-        cur_Q = self.q_online(states)[indices, actions]
-        next_Q = self.q_target(next_states).max(dim=1).values
+            indices = list(range(self.batch_size))
+            cur_Q = self.q_online(states)[indices, actions]
+            next_Q = self.q_target(next_states).max(dim=1).values
 
-        next_Q[dones] = 0.0
-        q_target = rewards + self.gamma*next_Q
+            next_Q[dones] = 0.0
+            q_target = rewards + self.gamma*next_Q
 
-        loss = self.loss_fn(q_target, cur_Q).to(self.device)
-        loss.backward()
-        self.optimizer.step()
+            loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
+            loss.backward()
+            self.optimizer.step()
 
         self.update_target_network()
 

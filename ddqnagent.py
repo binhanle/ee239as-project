@@ -1,19 +1,19 @@
 import numpy as np
 import torch as T
-from nn_models import DQN
 from memory import ReplayMemory
-
+import torch
 
 class DDQNAgent():
-    def __init__(self, device, mem_buffer, q_online, q_target, optimizer_online, loss_fn, gamma=0.99, batch_size=200, update_target_interval=1000):
+    def __init__(self, device, mem_buffer, q_online, q_target, optimizer, loss_fn, gamma=0.99, batch_size=32, update_online_interval=4, update_target_interval=10000):
         self.device = device
         self.mem_buffer = mem_buffer
         self.q_online = q_online
         self.q_target = q_target
-        self.optimizer_online = optimizer_online
+        self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.gamma = gamma
         self.batch_size = batch_size
+        self.update_online_interval = update_online_interval
         self.update_target_interval = update_target_interval
         self.step_counter = 0
 
@@ -37,30 +37,31 @@ class DDQNAgent():
         return states, actions, rewards, next_states, dones
 
     def update_target_network(self):
-        if self.step_counter % self.update_target_interval == 0:
+        if self.step_counter % self.update_target_interval == 1:
             self.q_target.load_state_dict(self.q_online.state_dict())
 
     def optimize_model(self):
         if len(self.mem_buffer) < self.batch_size:
             return
+
+        if self.step_counter % self.update_online_interval == 0:
+            states, actions, rewards, next_states, dones = self.sample_memory()
+            self.optimizer.zero_grad()
         
-        states, actions, rewards, next_states, dones = self.sample_memory()
-        self.optimizer_online.zero_grad()
-       
 
-        indices = list(range(self.batch_size))
-        cur_Q = self.q_online(states)[indices, actions]
-        next_Q = self.q_target(next_states)
-        q_online = self.q_online(next_states)
+            indices = list(range(self.batch_size))
+            cur_Q = self.q_online(states)[indices, actions]
+            next_Q = self.q_target(next_states)
+            q_online = self.q_online(next_states)
 
-        max_actions = T.argmax(q_online, dim=1)
+            max_actions = T.argmax(q_online, dim=1)
 
-        next_Q[dones] = 0.0
-        q_target = rewards + self.gamma*next_Q[indices, max_actions]
+            next_Q[dones] = 0.0
+            q_target = rewards + self.gamma*next_Q[indices, max_actions]
 
-        loss = self.loss_fn(q_target, cur_Q).to(self.device)
-        loss.backward()
-        self.optimizer_online.step()
+            loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
+            loss.backward()
+            self.optimizer.step()
 
         self.update_target_network()
 
