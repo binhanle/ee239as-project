@@ -26,10 +26,10 @@ print("Observation space is:", STATE_SHAPE)
 # set training parameters here
 MEMORY_SIZE = 1000000 # maximum size of memory buffer, increase to as large as possible (paper used 1 million)
 LR = 0.00025 # learning rate (paper used 0.00025)
-GAMMA = 0.99
+GAMMA = 0.99 # paper used 0.99
 BATCH_SIZE = 32 # batch size for parameter updates (paper used 32)
-UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to online net
-UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied from online net to target net
+UPDATE_ONLINE_INTERVAL = 4 # number of steps in bewteen paramter updates to online net (paper used 4)
+UPDATE_TARGET_INTERVAL = 10000 # how frequently parameters are copied to target net (paper used 10k for dqn, 30k for ddqn)
 
 CKPT_FILENAME = ATARI_GAME + ".ckpt"
 CKPT_ENABLED = False
@@ -39,7 +39,7 @@ dqn_online = DQN(N_ACTIONS, STATE_SHAPE)
 dqn_target = DQN(N_ACTIONS, STATE_SHAPE)
 dqn_online.to(device)
 dqn_target.to(device)
-# optimizer = torch.optim.RMSprop(dqn_online.parameters(), lr=LR, momentum=0.95, eps=0.01)
+# optimizer = torch.optim.RMSprop(dqn_online.parameters(), lr=LR, momentum=0.95, eps=0.01) # paper used rmsprop
 optimizer = torch.optim.Adam(dqn_online.parameters(), lr=LR)
 if CKPT_ENABLED and os.path.exists(CKPT_FILENAME):
     progress = load_checkpoint(dqn_online, dqn_target, optimizer, CKPT_FILENAME)
@@ -56,9 +56,9 @@ agent = DQNAgent(device, mem_buffer, dqn_online, dqn_target, optimizer, loss_fn,
 # adjust these hyperparameters as necessary
 num_episodes = 5000 # number of episodes to train for
 explore_phase_length = 50000 # number of steps without any exploitation (paper used 50k)
-epsilon = 1.0 # initial epsilon value
+epsilon = 1.0 # initial epsilon value (paper used 1.0)
 epsilon_decrement_steps = 1000000 # how many steps to decrement epsilon to min value (paper used 1 million)
-min_epsilon = 0.1 # smallest possible value of epsilon (paper used 0.1)
+min_epsilon = 0.1 # smallest possible value of epsilon (paper used 0.1 for dqn, 0.01 for ddqn)
 epsilon_dec = (epsilon - min_epsilon) / epsilon_decrement_steps
 
 total_steps = 0
