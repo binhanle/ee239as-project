@@ -39,6 +39,7 @@ class DDQNAgent():
     def update_target_network(self):
         if self.step_counter % self.update_target_interval == 1:
             self.q_target.load_state_dict(self.q_online.state_dict())
+            print("update target")
 
     def optimize_model(self):
         if len(self.mem_buffer) < self.batch_size:
@@ -46,8 +47,6 @@ class DDQNAgent():
 
         if self.step_counter % self.update_online_interval == 0:
             states, actions, rewards, next_states, dones = self.sample_memory()
-            self.optimizer.zero_grad()
-        
 
             indices = list(range(self.batch_size))
             cur_Q = self.q_online(states)[indices, actions]
@@ -60,8 +59,11 @@ class DDQNAgent():
             q_target = rewards + self.gamma*next_Q[indices, max_actions]
 
             loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
+
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            print("update online")
 
         self.update_target_network()
 
