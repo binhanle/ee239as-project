@@ -58,8 +58,10 @@ num_episodes = 5000 # number of episodes to train for
 explore_phase_length = 50000 # number of steps without any exploitation (paper used 50k)
 epsilon = 1.0 # initial epsilon value (paper used 1.0)
 epsilon_decrement_steps = 1000000 # how many steps to decrement epsilon to min value (paper used 1 million)
-min_epsilon = 0.1 # smallest possible value of epsilon (paper used 0.1 for dqn, 0.01 for ddqn)
-epsilon_dec = (epsilon - min_epsilon) / epsilon_decrement_steps
+intermediate_epsilon = 0.1 # can be used to decay epsilon in two phases as recommended by openai (set equal to min_epsilon to disable)
+min_epsilon = 0.01 # smallest possible value of epsilon (paper used 0.1 for dqn, 0.01 for ddqn)
+epsilon_dec = (epsilon - intermediate_epsilon) / epsilon_decrement_steps
+final_epsilon_decay = (intermediate_epsilon - min_epsilon) / epsilon_decrement_steps
 
 total_steps = 0
 max_score = 0.0
@@ -79,6 +81,8 @@ for i_episode in range(num_episodes):
     # linearly anneal epsilon
     if total_steps > explore_phase_length:
       epsilon = max(epsilon - epsilon_dec, min_epsilon)
+      if total_steps >= explore_phase_length + epsilon_decrement_steps:
+        epsilon_dec = final_epsilon_decay
     
     if total_steps > explore_phase_length and np.random.random() > epsilon:
         action = agent.select_action(cur_state) # exploit
