@@ -48,13 +48,11 @@ class DDQNAgent():
 
         if self.step_counter % self.update_online_interval == 0:
             states, actions, rewards, next_states, dones = self.sample_memory()
-            self.optimizer.zero_grad()
-        
 
             indices = list(range(self.batch_size))
             cur_Q = self.q_online(states)[indices, actions]
             next_Q = self.q_target(next_states)
-            q_online = self.q_online(next_states)
+            q_online = self.q_online(next_states).detach()
 
             max_actions = T.argmax(q_online, dim=1)
 
@@ -62,6 +60,8 @@ class DDQNAgent():
             q_target = rewards + self.gamma*next_Q[indices, max_actions]
 
             loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
+
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             loss_value = loss.item()
