@@ -46,6 +46,7 @@ if CKPT_ENABLED and os.path.exists(CKPT_FILENAME):
 else:
     progress = []
 
+dqn_target.eval()
 mem_buffer = ReplayMemory(MEMORY_SIZE, STATE_SHAPE)
 
 loss_fn = torch.nn.SmoothL1Loss() # huber loss function
