@@ -211,11 +211,28 @@ class LazyFrames(object):
     def __getitem__(self, i):
         return self._frames[i][0]
 
+class PixelWrapper(gym.ObservationWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        env.reset()
+        screen = env.render(mode='rgb_array')
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=screen.shape, dtype=np.uint8)
+
+    def observation(self, obs):
+        return self.render(mode='rgb_array')
+
 def make_atari(env_id):
     env = gym.make(env_id)
     assert 'NoFrameskip' in env.spec.id
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
+    return env
+
+def make_classic(env_id):
+    env = gym.make(env_id)
+    env = PixelWrapper(env)
+    env = WarpFrame(env)
+    env = FrameStack(env, 4)
     return env
 
 def wrap_deepmind(env, episode_life=True, clip_rewards=True, frame_stack=True):
