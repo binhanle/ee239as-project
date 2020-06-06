@@ -46,7 +46,7 @@ class DQN(nn.Module):
 class DQN_alternate(nn.Module):
     def __init__(self, num_actions, state_shape, fc=512, kernel1=8, stride1=4, f1=32,
             kernel2=4, stride2=2, f2=64, kernel3=3, stride3=1, f3=64, kernel4=3, stride4=1, f4=64):
-        super(DQN, self).__init__()
+        super(DQN_alternate, self).__init__()
 
         c = state_shape[0]
         h = state_shape[1]
