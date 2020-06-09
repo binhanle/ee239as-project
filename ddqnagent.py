@@ -17,10 +17,18 @@ class DDQNAgent():
         self.update_target_interval = update_target_interval
         self.step_counter = 0
 
+        self.q_online.eval()
+        self.q_target.eval()
+
     def select_action(self, state):
         state_tensor = torch.tensor([state], dtype=torch.float).to(self.device)
         qvalues = self.q_online(state_tensor)
         return torch.argmax(qvalues).item()
+
+    def get_value(self, state):
+        state_tensor = torch.tensor([state], dtype=torch.float).to(self.device)
+        qvalues = self.q_online(state_tensor)
+        return torch.max(qvalues).item()
 
     def add_memory(self, state, action, reward, next_state, done):
         self.mem_buffer.push(state, action, reward, next_state, done)
@@ -61,10 +69,12 @@ class DDQNAgent():
 
             loss = self.loss_fn(q_target.detach(), cur_Q).to(self.device)
 
+            self.q_online.train()
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             loss_value = loss.item()
+            self.q_online.eval()
 
         self.update_target_network()
 
