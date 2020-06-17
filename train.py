@@ -76,6 +76,7 @@ for i_episode in range(num_episodes):
   mean_loss = 0
 
   cur_state = env.reset()
+  value = agent.get_value(cur_state)
 
   while not done:
     
@@ -111,7 +112,7 @@ for i_episode in range(num_episodes):
     #   print("Completed iteration", time_step)
 
   print("Episode {} score: {}, agent score: {}, total steps taken: {}, epsilon: {}".format(i_episode, score, agent_score, total_steps, epsilon))
-  progress.append((time_step, total_steps, score, agent_score, mean_loss))
+  progress.append((time_step, total_steps, score, agent_score, mean_loss, value))
   # print("Progress is", progress)
   if CKPT_ENABLED and score > max_score:
     max_score = score
